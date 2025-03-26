@@ -17,6 +17,14 @@ This MCP server provides the following tools:
 - **search-places**: Perform Google Places searches
 - **search-news**: Perform Google News searches
 - **get-google-reviews**: Fetch Google reviews for a place
+- **scrape**: Extract data from a specified URL
+- **crawl**: Crawl a website and return structured content
+- **extract-document**: Extract structured data from document files
+- **extract-image**: Extract structured data from image files
+- **doc-to-text**: Convert PDF or DOCX documents into plain text
+- **screenshot**: Capture a screenshot of a specified URL
+- **generate-ai-image**: Generate high-quality AI images
+- **extract-video**: Extract structured data from video files
 
 ## Prerequisites 📋
 
@@ -104,6 +112,14 @@ Search for recent developments in quantum computing and summarize the key findin
 
 ```
 What are the most popular places to visit in New York according to Google Maps?
+```
+
+```
+Extract the text from this PDF document: https://example.com/document.pdf
+```
+
+```
+Generate an AI image of a futuristic cityscape with flying cars.
 ```
 
 ## Troubleshooting 🔧
