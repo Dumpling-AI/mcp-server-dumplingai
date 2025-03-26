@@ -9,6 +9,12 @@
  * - Added search-places tool to perform Google Places searches
  * - Added search-news tool to perform Google News searches
  * - Added get-google-reviews tool to fetch Google reviews for a place
+ * - Added scrape tool to extract content from a webpage
+ * - Added crawl tool to crawl a website and extract content from multiple pages
+ * - Added extract-document tool to extract structured data from document files
+ * - Added extract-video tool to extract structured data from video files
+ * - Added extract-audio tool to extract structured data from audio files
+ * - Added generate-ai-image tool to generate AI images
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -537,6 +543,433 @@ server.tool(
       };
     } catch (error) {
       console.error("Error getting Google reviews:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to scrape content from a webpage
+server.tool(
+  "scrape",
+  {
+    url: z.string().url(),
+    format: z.enum(["markdown", "html", "screenshot"]).optional(),
+    cleaned: z.boolean().optional(),
+    renderJs: z.boolean().optional(),
+  },
+  async ({ url, format, cleaned, renderJs }) => {
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/scrape`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          format,
+          cleaned,
+          renderJs,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to scrape webpage: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                title: data.title,
+                url: data.url,
+                content: data.content,
+                metadata: data.metadata,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error scraping webpage:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to crawl a website and extract content from multiple pages
+server.tool(
+  "crawl",
+  {
+    url: z.string().url(),
+    limit: z.number().optional(),
+    depth: z.number().optional(),
+    format: z.enum(["markdown", "html", "screenshot"]).optional(),
+    cleaned: z.boolean().optional(),
+    renderJs: z.boolean().optional(),
+  },
+  async ({ url, limit, depth, format, cleaned, renderJs }) => {
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/crawl`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          limit,
+          depth,
+          format,
+          cleaned,
+          renderJs,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to crawl website: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                baseUrl: data.baseUrl,
+                pages: data.pages,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error crawling website:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to extract structured data from document files
+server.tool(
+  "extract-document",
+  {
+    url: z.string().url().optional(),
+    base64: z.string().optional(),
+    prompt: z.string(),
+    model: z.enum(["claude-3-haiku", "claude-3-sonnet", "claude-3-opus"]).optional(),
+  },
+  async ({ url, base64, prompt, model }) => {
+    // Ensure either url or base64 is provided
+    if (!url && !base64) {
+      throw new Error("Either url or base64 is required");
+    }
+
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/extract-document`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          base64,
+          prompt,
+          model,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to extract document data: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                result: data.result,
+                model: data.model,
+                credits: data.credits,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error extracting document data:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to extract structured data from video files
+server.tool(
+  "extract-video",
+  {
+    url: z.string().url().optional(),
+    base64: z.string().optional(),
+    prompt: z.string(),
+    model: z.enum(["claude-3-haiku", "claude-3-sonnet", "claude-3-opus"]).optional(),
+    frameRate: z.number().optional(),
+  },
+  async ({ url, base64, prompt, model, frameRate }) => {
+    // Ensure either url or base64 is provided
+    if (!url && !base64) {
+      throw new Error("Either url or base64 is required");
+    }
+
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/extract-video`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          base64,
+          prompt,
+          model,
+          frameRate,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to extract video data: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                result: data.result,
+                model: data.model,
+                credits: data.credits,
+                duration: data.duration,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error extracting video data:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to extract structured data from audio files
+server.tool(
+  "extract-audio",
+  {
+    url: z.string().url().optional(),
+    base64: z.string().optional(),
+    prompt: z.string(),
+    model: z.enum(["claude-3-haiku", "claude-3-sonnet", "claude-3-opus"]).optional(),
+  },
+  async ({ url, base64, prompt, model }) => {
+    // Ensure either url or base64 is provided
+    if (!url && !base64) {
+      throw new Error("Either url or base64 is required");
+    }
+
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/extract-audio`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          base64,
+          prompt,
+          model,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to extract audio data: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                result: data.result,
+                model: data.model,
+                credits: data.credits,
+                duration: data.duration,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error extracting audio data:", error);
+      throw error;
+    }
+  }
+);
+
+// Tool to generate AI images
+server.tool(
+  "generate-ai-image",
+  {
+    prompt: z.string(),
+    model: z.enum([
+      "FLUX.1-schnell",
+      "FLUX.1-dev",
+      "FLUX.1-pro",
+      "FLUX.1.1-pro",
+      "recraft-v3",
+    ]).optional(),
+    size: z.string().optional(),
+    style: z.string().optional(),
+    negativePrompt: z.string().optional(),
+    seed: z.number().optional(),
+    steps: z.number().optional(),
+    cfgScale: z.number().optional(),
+    numImages: z.number().optional(),
+  },
+  async ({
+    prompt,
+    model,
+    size,
+    style,
+    negativePrompt,
+    seed,
+    steps,
+    cfgScale,
+    numImages,
+  }) => {
+    // Get API key from environment variable
+    const apiKey = process.env.DUMPLING_API_KEY;
+    if (!apiKey) {
+      throw new Error("DUMPLING_API_KEY environment variable not set");
+    }
+
+    try {
+      const response = await fetch(`${NWS_API_BASE}/api/v1/generate-ai-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          prompt,
+          model,
+          size,
+          style,
+          negativePrompt,
+          seed,
+          steps,
+          cfgScale,
+          numImages,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to generate AI image: ${response.status} ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                images: data.images,
+                model: data.model,
+                credits: data.credits,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error generating AI image:", error);
       throw error;
     }
   }
