@@ -2,6 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createTransport } from "@smithery/sdk/transport.js";
 import { z } from "zod";
 
 const NWS_API_BASE = "https://app.dumplingai.com";
@@ -715,7 +716,7 @@ server.tool(
         prompt,
         jsonMode,
         requestSource: "mcp",
-      }), // Assuming single image for simplicity
+      }),
     });
     if (!response.ok)
       throw new Error(`Failed: ${response.status} ${await response.text()}`);
@@ -1050,6 +1051,136 @@ server.tool(
       throw new Error(`Failed: ${response.status} ${await response.text()}`);
     const data = await response.json();
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// Smithery integration tools
+server.tool(
+  "smithery-sequential-thinking",
+  "Enhance reasoning with structured sequential thinking process.",
+  {
+    prompt: z.string().describe("The problem or question to think about"),
+    maxSteps: z.number().optional().default(5).describe("Maximum number of thinking steps"),
+    format: z.enum(["markdown", "json"]).optional().default("markdown").describe("Output format"),
+  },
+  async ({ prompt, maxSteps, format }) => {
+    const apiKey = process.env.SMITHERY_API_KEY;
+    if (!apiKey) throw new Error("SMITHERY_API_KEY not set");
+    
+    try {
+      // Create Smithery transport
+      const transport = createTransport(
+        "https://server.smithery.ai/@smithery-ai/server-sequential-thinking",
+        {},
+        apiKey
+      );
+      
+      // Call the sequential thinking tool
+      const response = await transport.callTool("sequential-thinking", {
+        prompt,
+        max_steps: maxSteps,
+        format,
+      });
+      
+      return { content: [{ type: "text", text: JSON.stringify(response, null, 2) }] };
+    } catch (error) {
+      throw new Error(`Smithery API error: ${error.message}`);
+    }
+  }
+);
+
+server.tool(
+  "smithery-brave-search",
+  "Perform web searches using Brave Search via Smithery.",
+  {
+    query: z.string().describe("Search query"),
+    count: z.number().optional().default(10).describe("Number of results to return"),
+    country: z.string().optional().describe("Country code (e.g., 'us')"),
+    language: z.string().optional().describe("Language code (e.g., 'en')"),
+  },
+  async ({ query, count, country, language }) => {
+    const apiKey = process.env.SMITHERY_API_KEY;
+    if (!apiKey) throw new Error("SMITHERY_API_KEY not set");
+    
+    try {
+      // Create Smithery transport
+      const transport = createTransport(
+        "https://server.smithery.ai/brave-search",
+        {},
+        apiKey
+      );
+      
+      // Call the Brave search tool
+      const response = await transport.callTool("search", {
+        query,
+        count,
+        country,
+        language,
+      });
+      
+      return { content: [{ type: "text", text: JSON.stringify(response, null, 2) }] };
+    } catch (error) {
+      throw new Error(`Smithery API error: ${error.message}`);
+    }
+  }
+);
+
+server.tool(
+  "smithery-browserbase",
+  "Automate browser interactions using Browserbase via Smithery.",
+  {
+    url: z.string().url().describe("URL to navigate to"),
+    action: z.enum(["navigate", "screenshot", "extract", "click", "type"]).describe("Action to perform"),
+    selector: z.string().optional().describe("CSS selector for click or type actions"),
+    text: z.string().optional().describe("Text to type"),
+    waitForSelector: z.string().optional().describe("Selector to wait for before action"),
+  },
+  async ({ url, action, selector, text, waitForSelector }) => {
+    const apiKey = process.env.SMITHERY_API_KEY;
+    if (!apiKey) throw new Error("SMITHERY_API_KEY not set");
+    
+    try {
+      // Create Smithery transport
+      const transport = createTransport(
+        "https://server.smithery.ai/browserbase",
+        {},
+        apiKey
+      );
+      
+      // Map actions to appropriate Browserbase tools
+      let toolName = "";
+      let params = {};
+      
+      switch (action) {
+        case "navigate":
+          toolName = "navigate";
+          params = { url, waitForSelector };
+          break;
+        case "screenshot":
+          toolName = "screenshot";
+          params = { waitForSelector };
+          break;
+        case "extract":
+          toolName = "extract-page-content";
+          params = { waitForSelector };
+          break;
+        case "click":
+          toolName = "click";
+          params = { selector, waitForSelector };
+          break;
+        case "type":
+          toolName = "type";
+          params = { selector, text, waitForSelector };
+          break;
+      }
+      
+      // Call the appropriate Browserbase tool
+      const response = await transport.callTool(toolName, params);
+      
+      return { content: [{ type: "text", text: JSON.stringify(response, null, 2) }] };
+    } catch (error) {
+      throw new Error(`Smithery API error: ${error.message}`);
+    }
   }
 );
 
