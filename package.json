@@ -26,6 +26,7 @@
   "description": "MCP Server for Dumpling AI providing various Data scraping, conversion, and extraction tools",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
+    "@smithery/sdk": "^1.0.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
