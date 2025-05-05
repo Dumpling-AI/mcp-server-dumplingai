@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dumpling-ai-mcp-server-dumplingai-badge.png)](https://mseep.ai/app/dumpling-ai-mcp-server-dumplingai)
+
 # Dumpling AI MCP Server
 
 A Model Context Protocol (MCP) server implementation that integrates with Dumpling AI for data scraping, content processing, knowledge management, AI agents, and code execution capabilities.
